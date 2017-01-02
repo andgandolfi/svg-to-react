@@ -14,6 +14,7 @@ module.exports = function(svgString) {
 
       // check if we are inside a react props object
       if (this.inCreateElCall && parent.type === 'ObjectExpression') {
+        renameProps(node, parent, this);
         camelizeProps(node, parent, this);
         removeHardcodedDimensions(node, parent, this);
         parameterizeColors(node, parent, this);
@@ -38,6 +39,13 @@ function stripSvgArguments(svgString) {
   return svgString
     // remove and parameterize all svg attributes except viewbox
     .replace(/<svg([^>]*)*>/, '<svg {...params}'+viewBoxStr+'>');
+}
+
+function renameProps(node, parent) {
+  if (node.type === 'Property' && node.key.type === 'Identifier' && node.key.name === 'class') {
+      node.key.name = 'className';
+  }
+  return node;
 }
 
 function camelizeProps(node, parent) {
