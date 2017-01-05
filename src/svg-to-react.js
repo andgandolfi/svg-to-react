@@ -3,7 +3,7 @@ var replace = require('estraverse').replace;
 var generate = require('escodegen').generate;
 
 module.exports = function(svgString) {
-  var trans = babel.transform(stripSvgArguments(svgString), {
+  var trans = babel.transform(wrapStyleTags(stripSvgArguments(svgString)), {
     code: false,
     whitelist: ['react']
   });
@@ -30,6 +30,24 @@ module.exports = function(svgString) {
 
   return Function('params', generate(ast));
 };
+
+function wrapStyleTags(svgString) {
+  var styleRe = /(<[\s]*style.*?>)(.*?)<\/[\s]*style[\s]*>/gim;
+  var matches = svg.match(styleRe);
+
+  if (!matches) {
+    return svgString;
+  }
+
+  for (var i = 0; i < matches.length; i++) {
+    var m = matches[i];
+    var openTag = m.replace(styleRe, '$1');
+    var content = m.replace(styleRe, '$2');
+    svgString = svgString.replace(m, `${openTag}{"${content.replace(/"/g, '\\"')}"}</style>`);
+  }
+
+  return svgString;
+}
 
 function stripSvgArguments(svgString) {
   var viewBox = (svgString.match(/viewBox=['"]([^'"]*)['"]/) || [])[1];
