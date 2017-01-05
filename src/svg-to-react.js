@@ -33,7 +33,7 @@ module.exports = function(svgString) {
 
 function wrapStyleTags(svgString) {
   var styleRe = /(<[\s]*style.*?>)(.*?)<\/[\s]*style[\s]*>/gim;
-  var matches = svg.match(styleRe);
+  var matches = svgString.match(styleRe);
 
   if (!matches) {
     return svgString;
