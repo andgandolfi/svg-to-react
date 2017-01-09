@@ -17,7 +17,6 @@ module.exports = function(svgString) {
         renameProps(node, parent, this);
         camelizeProps(node, parent, this);
         removeHardcodedDimensions(node, parent, this);
-        parameterizeColors(node, parent, this);
       }
     },
     leave: function(node, parent) {
@@ -25,7 +24,6 @@ module.exports = function(svgString) {
     }
   });
 
-  ast.body.unshift(buildColorEvalAst());
   ast = makeLastStatementReturn(ast);
 
   return Function('params', generate(ast));
@@ -82,19 +80,6 @@ function removeHardcodedDimensions(node, parent, context) {
   }
 }
 
-function parameterizeColors(node, parent, context) {
-  var evalColor;
-
-  if (isPropertyIdentifierWithNames(node, ['fill', 'stroke'])) {
-    if (node.value.value !== 'none') {
-      evalColor = 'evalColor("'+node.key.name+'", "'+node.value.value+'")';
-      node.computed = false;
-      node.value = getAst(evalColor).body[0].expression;
-      return node;
-    }
-  }
-}
-
 function makeLastStatementReturn(ast) {
   var idx = ast.body.length-1;
   var lastStatement = ast.body[idx];
@@ -139,18 +124,6 @@ function isReactCreateElement(node) {
     && (node.callee.object && node.callee.object.name === 'React')
     && (node.callee.property && node.callee.property.name === 'createElement')
   );
-}
-
-function buildColorEvalAst() {
-  var makeColorEval = function() {
-    if (typeof params.color === 'function') {
-      return params.color;
-    } else {
-      return function() { return params.color; };
-    }
-  };
-
-  return getAst('var evalColor = ('+makeColorEval+'());').body[0];
 }
 
 function getAst(code) {
